@@ -1,0 +1,398 @@
+<meta charset="utf-8">
+<title>IPO Post Listing Rally</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a research terminal page. Header + controls strip, verdict band, path chart, live watchlist, signal ledger with a detail chart. */
+:root {
+  --bg: #f3f5f8;
+  --panel: #ffffff;
+  --ink: #16202e;
+  --muted: #5b6878;
+  --line: #dde2ea;
+  --accent: #c1571b;       /* listing-close line, the pattern's anchor */
+  --accent-soft: #f6e3d6;
+  --up: #1c7a5a;
+  --down: #b3363a;
+  --band: #dfe7f1;
+  --nifty: #8a96a6;
+  --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141b; --panel: #171e28; --ink: #e5e9ef; --muted: #93a0b1; --line: #29323f;
+  --accent: #ec8a4d; --accent-soft: #3a2518; --up: #4cc393; --down: #f07a7d; --band: #223044; --nifty: #6f7c8d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f141b; --panel: #171e28; --ink: #e5e9ef; --muted: #93a0b1; --line: #29323f;
+  --accent: #ec8a4d; --accent-soft: #3a2518; --up: #4cc393; --down: #f07a7d; --band: #223044; --nifty: #6f7c8d; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 60px; display: grid; gap: 22px }
+h1, h2 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0 }
+h1 { font-size: clamp(28px, 4.2vw, 44px); letter-spacing: -0.02em; line-height: 1.05 }
+h2 { font-size: 19px; letter-spacing: -0.01em }
+.eyebrow { font: 500 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted) }
+.muted { color: var(--muted) }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+.up { color: var(--up) } .down { color: var(--down) }
+
+header { display: grid; gap: 10px }
+header .hyp { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); max-width: 70ch }
+.step { display: inline-flex; gap: 6px; align-items: center; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); font-size: 13px; color: var(--ink) }
+.step b { font: 500 11px var(--mono); color: var(--accent) }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0 }
+.controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: end }
+.ctl { display: grid; gap: 4px; min-width: 0; flex: 1 1 180px }
+.ctl label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.ctl label { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted) }
+.ctl .row { display: flex; gap: 8px; align-items: center }
+.ctl input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0 }
+.ctl output { font: 500 13px var(--mono); flex: 0 0 44px; text-align: right }
+select, button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px }
+button { cursor: pointer }
+button:hover { border-color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+.verdict { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr); gap: 22px; align-items: start }
+.pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font: 600 12px var(--mono); letter-spacing: .06em; text-transform: uppercase }
+.pill.mixed { background: var(--accent-soft); color: var(--accent) }
+.pill.yes { background: color-mix(in srgb, var(--up) 18%, transparent); color: var(--up) }
+.pill.no { background: color-mix(in srgb, var(--down) 18%, transparent); color: var(--down) }
+.verdict p { margin: 10px 0 0; max-width: 60ch }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px }
+.tile { border-top: 2px solid var(--line); padding-top: 8px; display: grid; gap: 2px }
+.tile .v { font: 500 26px/1.1 var(--mono); font-variant-numeric: tabular-nums }
+.tile .k { font-size: 12px; color: var(--muted) }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 22px }
+.scroll { overflow-x: auto }
+table { width: 100%; border-collapse: collapse; font-size: 13px }
+th { text-align: left; font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 8px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; cursor: default }
+th.sort { cursor: pointer } th.sort:hover { color: var(--ink) }
+td { padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap }
+td.r, th.r { text-align: right }
+tbody tr { cursor: pointer }
+tbody tr:hover, tbody tr.sel { background: color-mix(in srgb, var(--accent) 8%, transparent) }
+.sym { font-weight: 600 } .co { color: var(--muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: bottom }
+.tag { font: 500 11px var(--mono); padding: 2px 7px; border-radius: 4px; background: var(--band); color: var(--ink) }
+.tag.stop { background: color-mix(in srgb, var(--down) 16%, transparent); color: var(--down) }
+.tag.time { background: color-mix(in srgb, var(--up) 16%, transparent); color: var(--up) }
+.head { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: baseline; margin-bottom: 12px }
+svg text { fill: var(--muted); font: 11px var(--mono) }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 6px }
+.legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px }
+.hz { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-top: 14px; border-top: 1px solid var(--line) }
+.hz div { padding: 8px 6px 0 0; font-size: 12px; color: var(--muted) }
+.hz b { display: block; font: 500 15px var(--mono); color: var(--ink) }
+.wl-empty { color: var(--muted); padding: 10px 0 }
+.note { font-size: 12px; color: var(--muted); max-width: 90ch }
+@media (max-width: 860px) { .verdict, .grid2 { grid-template-columns: 1fr } .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">NSE mainboard IPOs · listed 2021 onward · daily closes</span>
+    <h1>IPO Post Listing Rally</h1>
+    <div class="hyp">
+      <span class="step"><b>1</b> Lists, sets the listing-day close</span>
+      <span class="step"><b>2</b> Drifts below it</span>
+      <span class="step"><b>3</b> Rounds out a U and closes back above</span>
+      <span class="step"><b>4</b> Rallies?</span>
+    </div>
+  </header>
+
+  <section class="panel controls" aria-label="Pattern settings">
+    <div class="ctl"><label for="dip">Min dip</label><div class="row"><input id="dip" type="range" min="0" max="40" step="1" value="10"><output id="dipO"></output></div></div>
+    <div class="ctl"><label for="base">Min base (days)</label><div class="row"><input id="base" type="range" min="1" max="60" step="1" value="10"><output id="baseO"></output></div></div>
+    <div class="ctl"><label for="maxd">Reclaim within (days)</label><div class="row"><input id="maxd" type="range" min="20" max="500" step="10" value="250"><output id="maxdO"></output></div></div>
+    <div class="ctl"><label for="stop">Stop</label><div class="row"><input id="stop" type="range" min="2" max="30" step="1" value="8"><output id="stopO"></output></div></div>
+    <div class="ctl"><label for="hold">Hold (days)</label><div class="row"><input id="hold" type="range" min="10" max="250" step="5" value="60"><output id="holdO"></output></div></div>
+    <div class="ctl" style="flex:0 1 150px"><label for="yr">Listed from</label><select id="yr"></select></div>
+    <div class="ctl" style="flex:0 0 auto"><label>&nbsp;</label><button id="reset" type="button">Reset</button></div>
+  </section>
+
+  <section class="panel verdict" aria-label="Verdict">
+    <div>
+      <span class="eyebrow">Verdict at these settings</span>
+      <div style="margin-top:8px"><span id="pill" class="pill"></span></div>
+      <p id="vtext"></p>
+    </div>
+    <div>
+      <div class="tiles" id="tiles"></div>
+      <div class="hz" id="hz"></div>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <div class="head"><h2>What happens after the reclaim</h2><span class="note">Return from reclaim-day close, all signals</span></div>
+      <div id="path"></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Median signal</span><span><i style="background:var(--band);height:8px"></i>Middle 50% of signals</span><span><i style="background:var(--nifty)"></i>Nifty 50, same dates</span></div>
+    </section>
+    <section class="panel">
+      <div class="head"><h2>Watchlist now</h2><span class="note num" id="asof"></span></div>
+      <div id="watch"></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="head"><h2 id="detailTitle">Signal detail</h2><span class="note" id="detailNote"></span></div>
+    <div id="detail"></div>
+  </section>
+
+  <section class="panel">
+    <div class="head"><h2>Signal ledger</h2><span class="note" id="ledgerNote"></span></div>
+    <div class="scroll"><table id="ledger"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <p class="note">Method: day 0 is the first NSE session. A signal needs a close at least the chosen dip below the listing-day close, then the first close back above it, no sooner than the minimum base and within the reclaim window. Entry is that day's close. The trade exits at the first close under the stop level or after the hold period. Prices from Yahoo Finance (split-adjusted, dividends excluded); issue data from NSE. IPOs that were renamed or delisted may be missing. Research only, not investment advice.</p>
+</div>
+
+<script src="data.js"></script>
+<script>
+const D = window.IPO_DATA;
+const $ = id => document.getElementById(id);
+const H = [20, 60, 120, 250];
+const fmtP = (x, d = 1) => x == null || isNaN(x) ? "–" : (x > 0 ? "+" : "") + (x * 100).toFixed(d) + "%";
+const cls = x => x == null || isNaN(x) ? "" : x > 0 ? "up" : "down";
+const med = a => { a = a.filter(v => v != null && !isNaN(v)).sort((x, y) => x - y); if (!a.length) return NaN; const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2 };
+const q = (a, p) => { a = a.filter(v => !isNaN(v)).sort((x, y) => x - y); if (!a.length) return NaN; const i = (a.length - 1) * p, lo = Math.floor(i); return a[lo] + (a[Math.min(lo + 1, a.length - 1)] - a[lo]) * (i - lo) };
+const mean = a => { a = a.filter(v => !isNaN(v)); return a.length ? a.reduce((s, v) => s + v, 0) / a.length : NaN };
+const EPOCH = Date.UTC(2020, 0, 1);
+const dstr = day => new Date(EPOCH + day * 864e5).toISOString().slice(0, 10);
+
+// Decode day offsets
+function days(o) { const out = [o.d0]; for (const g of o.dd) out.push(out[out.length - 1] + g); return out }
+const niftyDays = days(D.nifty);
+const niftyByDay = new Float64Array(niftyDays[niftyDays.length - 1] + 400);
+{ let k = 0, last = D.nifty.c[0]; for (let d = 0; d < niftyByDay.length; d++) { while (k < niftyDays.length && niftyDays[k] <= d) last = D.nifty.c[k++]; niftyByDay[d] = last } }
+const niftyAt = d => niftyByDay[Math.min(d, niftyByDay.length - 1)];
+const STOCKS = D.stocks.map(s => ({ ...s, t: days(s) }));
+const lastDay = Math.max(...STOCKS.map(s => s.t[s.t.length - 1]));
+const years = [...new Set(STOCKS.map(s => +dstr(s.t[0]).slice(0, 4)))].sort();
+$("yr").innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+$("asof").textContent = "Data to " + D.asof;
+
+// Same logic as backtest.py detect()
+function detect(c, dip, minBase, maxDays) {
+  const L = c[0];
+  let first = -1;
+  for (let i = 1; i < c.length; i++) if (c[i] < L) { first = i; break }
+  if (first < 0) return { kind: "never_below" };
+  let tr = Infinity, ti = -1;
+  const end = Math.min(c.length, maxDays + 1);
+  for (let i = first; i < end; i++) {
+    if (c[i] < tr) { tr = c[i]; ti = i }
+    if (c[i] > L && tr <= L * (1 - dip) && i >= minBase) return { kind: "u_turn", i, ti, depth: tr / L - 1 };
+    if (c[i] > L && tr > L * (1 - dip)) { tr = Infinity; ti = -1 }
+  }
+  return { kind: tr <= L * (1 - dip) ? "no_reclaim" : "shallow", ti, depth: isFinite(tr) ? tr / L - 1 : null };
+}
+function trade(c, L, i, stop, hold) {
+  const sp = L * (1 - stop);
+  for (let j = i + 1; j < Math.min(c.length, i + hold + 1); j++) if (c[j] < sp) return { r: c[j] / c[i] - 1, n: j - i, exit: "stop" };
+  const j = Math.min(c.length - 1, i + hold);
+  return { r: c[j] / c[i] - 1, n: j - i, exit: j === i + hold ? "time" : "open" };
+}
+
+function params() { return { dip: +$("dip").value / 100, base: +$("base").value, maxd: +$("maxd").value, stop: +$("stop").value / 100, hold: +$("hold").value, yr: +$("yr").value } }
+
+let SIG = [], sortKey = "entry", sortDir = -1, selected = null;
+
+function compute() {
+  const p = params();
+  const rows = [];
+  for (const s of STOCKS) {
+    if (+dstr(s.t[0]).slice(0, 4) < p.yr) continue;
+    const c = s.c, d = detect(c, p.dip, p.base, p.maxd);
+    const r = { s, d, L: c[0] };
+    if (d.kind === "u_turn") {
+      const i = d.i;
+      r.fwd = {}; r.xs = {};
+      for (const h of H) {
+        if (i + h < c.length) { r.fwd[h] = c[i + h] / c[i] - 1; r.xs[h] = r.fwd[h] - (niftyAt(s.t[i + h]) / niftyAt(s.t[i]) - 1) }
+        else { r.fwd[h] = NaN; r.xs[h] = NaN }
+      }
+      r.tr = trade(c, c[0], i, p.stop, p.hold);
+    }
+    rows.push(r);
+  }
+  return { p, rows };
+}
+
+function render() {
+  for (const k of ["dip", "stop"]) $(k + "O").textContent = $(k).value + "%";
+  for (const k of ["base", "maxd", "hold"]) $(k + "O").textContent = $(k).value + "d";
+  const { p, rows } = compute();
+  SIG = rows.filter(r => r.d.kind === "u_turn");
+  const n = rows.length, m = SIG.length;
+  const r60 = SIG.map(r => r.fwd[60]), x60 = SIG.map(r => r.xs[60]);
+  const closed = SIG.filter(r => r.tr.exit !== "open");
+  const tr = closed.map(r => r.tr.r);
+  const win60 = r60.filter(v => !isNaN(v)).length ? r60.filter(v => v > 0).length / r60.filter(v => !isNaN(v)).length : NaN;
+  const tWin = tr.length ? tr.filter(v => v > 0).length / tr.length : NaN;
+  const tAvg = mean(tr), tMed = med(tr);
+  const wins = tr.filter(v => v > 0), losses = tr.filter(v => v <= 0);
+  const sortedTr = [...tr].sort((a, b) => b - a);
+  const exTop5 = mean(sortedTr.slice(5));
+
+  // Verdict
+  const m60 = med(r60), mx60 = med(x60);
+  let kind, text;
+  if (m < 15) { kind = "no"; text = `Only ${m} signals at these settings. Too few to judge; loosen the filters.` }
+  else if (m60 > 0.03 && mx60 > 0 && win60 > 0.55) { kind = "yes"; text = `The typical signal gains ${fmtP(m60)} in 60 sessions and ${Math.round(win60 * 100)}% of signals are up. The median signal beats the Nifty by ${fmtP(mx60)}.` }
+  else if (tAvg > 0) { kind = "mixed"; text = `The U-turn is common (${Math.round(m / n * 100)}% of IPOs), but the reclaim behaves like a coin flip. The median signal returns ${fmtP(m60)} after 60 sessions and ${Math.round(win60 * 100)}% end up. The average trade still makes ${fmtP(tAvg)}, because a few winners run 50–130%. Without the top 5 trades it drops to ${fmtP(exTop5)}.` }
+  else { kind = "no"; text = `Signals lose money on average (${fmtP(tAvg)} per trade) and the median 60-session return is ${fmtP(m60)}.` }
+  $("pill").className = "pill " + kind;
+  $("pill").textContent = { yes: "Supported", mixed: "Mixed, driven by outliers", no: "Not supported" }[kind];
+  $("vtext").textContent = text;
+
+  $("tiles").innerHTML = [
+    [`${m}<span class="muted" style="font-size:15px"> / ${n}</span>`, "IPOs that formed the U"],
+    [`<span class="${cls(m60)}">${fmtP(m60)}</span>`, "Median return, 60 sessions"],
+    [`<span class="${cls(tAvg)}">${fmtP(tAvg)}</span>`, `Avg trade · ${Math.round(tWin * 100)}% win`],
+    [`<span class="${cls(tMed)}">${fmtP(tMed)}</span>`, `Median trade · ${Math.round(closed.filter(r => r.tr.exit === "stop").length / Math.max(1, closed.length) * 100)}% stopped`],
+  ].map(([v, k]) => `<div class="tile"><span class="v">${v}</span><span class="k">${k}</span></div>`).join("");
+  $("hz").innerHTML = H.map(h => {
+    const a = SIG.map(r => r.fwd[h]).filter(v => !isNaN(v)), x = SIG.map(r => r.xs[h]).filter(v => !isNaN(v));
+    return `<div>${h} sessions · n=${a.length}<b class="${cls(med(a))}">${fmtP(med(a))}</b>${Math.round(a.filter(v => v > 0).length / Math.max(1, a.length) * 100)}% up · ${Math.round(x.filter(v => v > 0).length / Math.max(1, x.length) * 100)}% beat Nifty</div>`
+  }).join("") ;
+  $("hz").insertAdjacentHTML("beforeend", `<div style="grid-column:1/-1;padding-top:8px">Winning trades average <b style="display:inline" class="up">${fmtP(mean(wins))}</b>, losing trades <b style="display:inline" class="down">${fmtP(mean(losses))}</b> (${closed.length} closed trades, stop ${Math.round(p.stop * 100)}% under listing close, hold ${p.hold} sessions).</div>`);
+
+  drawPath();
+  drawWatch(rows, p);
+  drawLedger();
+  if (!selected || !SIG.includes(selected)) selected = [...SIG].sort((a, b) => (b.s.t[b.d.i]) - (a.s.t[a.d.i]))[0] || null;
+  else selected = SIG.find(r => r.s.s === selected.s.s) || null;
+  drawDetail(selected);
+}
+
+// ---------- charts ----------
+function scale(d0, d1, r0, r1) { return v => r0 + (v - d0) / (d1 - d0) * (r1 - r0) }
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(s => span / s <= n) || 10 * mag;
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6)); return out;
+}
+
+function drawPath() {
+  const K = 120, W = 640, Hh = 290, ml = 48, mr = 14, mt = 12, mb = 28;
+  const med_ = [], lo = [], hi = [], nif = [], cnt = [];
+  for (let k = 0; k <= K; k++) {
+    const a = [], b = [];
+    for (const r of SIG) {
+      const i = r.d.i, c = r.s.c;
+      if (i + k < c.length) { a.push(c[i + k] / c[i] - 1); b.push(niftyAt(r.s.t[i + k]) / niftyAt(r.s.t[i]) - 1) }
+    }
+    med_.push(med(a)); lo.push(q(a, .25)); hi.push(q(a, .75)); nif.push(med(b)); cnt.push(a.length);
+  }
+  if (!SIG.length) { $("path").innerHTML = `<p class="wl-empty">No signals at these settings.</p>`; return }
+  let ymin = Math.min(...lo.filter(v => !isNaN(v)), 0), ymax = Math.max(...hi.filter(v => !isNaN(v)), 0);
+  const pad = (ymax - ymin) * .08; ymin -= pad; ymax += pad;
+  const x = scale(0, K, ml, W - mr), y = scale(ymin, ymax, Hh - mb, mt);
+  const line = arr => arr.map((v, k) => isNaN(v) ? "" : `${k === 0 ? "M" : "L"}${x(k).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const band = hi.map((v, k) => `${k ? "L" : "M"}${x(k).toFixed(1)},${y(v).toFixed(1)}`).join("") + lo.map((v, k) => [k, v]).reverse().map(([k, v]) => `L${x(k).toFixed(1)},${y(v).toFixed(1)}`).join("") + "Z";
+  const yt = niceTicks(ymin, ymax, 5);
+  let s = `<svg viewBox="0 0 ${W} ${Hh}" width="100%" role="img" aria-label="Median path after reclaim">`;
+  s += yt.map(v => `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v === 0 ? 1.4 : 1}"/><text x="${ml - 6}" y="${y(v) + 4}" text-anchor="end">${(v * 100).toFixed(0)}%</text>`).join("");
+  s += [0, 20, 40, 60, 80, 100, 120].map(k => `<text x="${x(k)}" y="${Hh - 8}" text-anchor="middle">${k === 0 ? "reclaim" : "+" + k}</text>`).join("");
+  s += `<path d="${band}" fill="var(--band)" opacity=".9"/>`;
+  s += `<path d="${line(nif)}" fill="none" stroke="var(--nifty)" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+  s += `<path d="${line(med_)}" fill="none" stroke="var(--accent)" stroke-width="2.4"/>`;
+  for (const k of [60, 120]) s += `<circle cx="${x(k)}" cy="${y(med_[k])}" r="3.5" fill="var(--accent)"/><text x="${x(k) - 6}" y="${y(med_[k]) - 8}" text-anchor="end" style="fill:var(--ink)">${fmtP(med_[k])}</text>`;
+  s += `<text x="${W - mr}" y="${mt + 10}" text-anchor="end">sessions after reclaim · n falls from ${cnt[0]} to ${cnt[K]}</text></svg>`;
+  $("path").innerHTML = s;
+}
+
+function drawWatch(rows, p) {
+  const now = lastDay;
+  const fresh = SIG.filter(r => now - r.s.t[r.d.i] <= 21).sort((a, b) => b.s.t[b.d.i] - a.s.t[a.d.i]);
+  const base = rows.filter(r => r.d.kind === "no_reclaim" && r.s.c.length <= p.maxd && now - r.s.t[r.s.t.length - 1] < 10)
+    .map(r => ({ r, gap: r.L / r.s.c[r.s.c.length - 1] - 1 })).sort((a, b) => a.gap - b.gap).slice(0, 12);
+  let h = `<span class="eyebrow">Reclaimed listing close in the last 3 weeks</span>`;
+  h += fresh.length ? `<table><tbody>${fresh.map(r => `<tr data-s="${r.s.s}"><td><span class="sym">${r.s.s}</span></td><td class="num muted">${dstr(r.s.t[r.d.i])}</td><td class="r num down">${fmtP(r.d.depth, 0)} dip</td><td class="r num ${cls(r.s.c.at(-1) / r.s.c[r.d.i] - 1)}">${fmtP(r.s.c.at(-1) / r.s.c[r.d.i] - 1)}</td></tr>`).join("")}</tbody></table>` : `<p class="wl-empty">None right now.</p>`;
+  h += `<div style="height:14px"></div><span class="eyebrow">In the base · closest to reclaiming</span>`;
+  h += base.length ? `<table><thead><tr><th>Stock</th><th class="r">Low</th><th class="r">Day</th><th class="r">To reclaim</th></tr></thead><tbody>${base.map(({ r, gap }) => `<tr data-base="${r.s.s}"><td><span class="sym">${r.s.s}</span></td><td class="r num down">${fmtP(r.d.depth, 0)}</td><td class="r num muted">${r.s.c.length - 1}</td><td class="r num">${fmtP(gap)}</td></tr>`).join("")}</tbody></table>` : `<p class="wl-empty">No IPOs inside a base at these settings.</p>`;
+  $("watch").innerHTML = h;
+  $("watch").querySelectorAll("tr[data-s]").forEach(tr => tr.onclick = () => { selected = SIG.find(r => r.s.s === tr.dataset.s); drawDetail(selected); drawLedger() });
+  $("watch").querySelectorAll("tr[data-base]").forEach(tr => tr.onclick = () => { const r = rows.find(x => x.s.s === tr.dataset.base); drawDetail(r) });
+}
+
+const COLS = [
+  ["sym", "Stock", r => r.s.s],
+  ["listed", "Listed", r => r.s.t[0]],
+  ["lg", "Listing gain", r => r.s.ip ? r.L / r.s.ip - 1 : NaN, true],
+  ["depth", "Dip", r => r.d.depth, true],
+  ["day", "Reclaim day", r => r.d.i, true],
+  ["entry", "Signal date", r => r.s.t[r.d.i]],
+  ["r20", "20d", r => r.fwd[20], true], ["r60", "60d", r => r.fwd[60], true], ["r120", "120d", r => r.fwd[120], true],
+  ["tr", "Trade", r => r.tr.r, true],
+];
+function drawLedger() {
+  const col = COLS.find(c => c[0] === sortKey);
+  const rows = [...SIG].sort((a, b) => { const va = col[2](a), vb = col[2](b); if (isNaN(va) && typeof va === "number") return 1; if (isNaN(vb) && typeof vb === "number") return -1; return (va > vb ? 1 : va < vb ? -1 : 0) * sortDir });
+  $("ledger").tHead.innerHTML = `<tr>${COLS.map(c => `<th class="sort ${c[3] ? "r" : ""}" data-k="${c[0]}" aria-sort="${c[0] === sortKey ? (sortDir > 0 ? "ascending" : "descending") : "none"}">${c[1]}${c[0] === sortKey ? (sortDir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}<th>Exit</th></tr>`;
+  $("ledger").tBodies[0].innerHTML = rows.map(r => {
+    const lg = r.s.ip ? r.L / r.s.ip - 1 : NaN;
+    return `<tr data-s="${r.s.s}" class="${selected && selected.s.s === r.s.s ? "sel" : ""}">
+    <td><span class="sym">${r.s.s}</span> <span class="co">${r.s.n}</span></td>
+    <td class="num muted">${dstr(r.s.t[0])}</td>
+    <td class="r num ${cls(lg)}">${fmtP(lg, 0)}</td>
+    <td class="r num down">${fmtP(r.d.depth, 0)}</td>
+    <td class="r num">${r.d.i}</td>
+    <td class="num">${dstr(r.s.t[r.d.i])}</td>
+    ${[20, 60, 120].map(h => `<td class="r num ${cls(r.fwd[h])}">${fmtP(r.fwd[h])}</td>`).join("")}
+    <td class="r num ${cls(r.tr.r)}">${fmtP(r.tr.r)}</td>
+    <td><span class="tag ${r.tr.exit}">${r.tr.exit === "stop" ? "stopped" : r.tr.exit === "time" ? "time exit" : "open"}</span></td></tr>`
+  }).join("");
+  $("ledgerNote").textContent = `${SIG.length} signals · click a row to chart it · click a header to sort`;
+  $("ledger").tHead.querySelectorAll("th[data-k]").forEach(th => th.onclick = () => { if (sortKey === th.dataset.k) sortDir *= -1; else { sortKey = th.dataset.k; sortDir = -1 } drawLedger() });
+  $("ledger").tBodies[0].querySelectorAll("tr").forEach(tr => tr.onclick = () => { selected = SIG.find(r => r.s.s === tr.dataset.s); drawDetail(selected); drawLedger(); $("detail").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }) });
+}
+
+function drawDetail(r) {
+  if (!r) { $("detail").innerHTML = `<p class="wl-empty">Pick a signal from the ledger or watchlist.</p>`; $("detailTitle").textContent = "Signal detail"; $("detailNote").textContent = ""; return }
+  const p = params(), s = r.s, c = s.c, L = c[0];
+  const end = r.d.kind === "u_turn" ? Math.min(c.length, r.d.i + Math.max(p.hold, 120) + 1) : c.length;
+  const cc = c.slice(0, end);
+  const W = 1100, Hh = 300, ml = 56, mr = 16, mt = 14, mb = 26;
+  const lvls = [...cc, L, L * (1 - p.stop)].concat(s.ip ? [s.ip] : []);
+  let ymin = Math.min(...lvls), ymax = Math.max(...lvls); const pad = (ymax - ymin) * .06; ymin -= pad; ymax += pad;
+  const x = scale(0, Math.max(1, cc.length - 1), ml, W - mr), y = scale(ymin, ymax, Hh - mb, mt);
+  const path = cc.map((v, k) => `${k ? "L" : "M"}${x(k).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const yt = niceTicks(ymin, ymax, 5);
+  let g = `<svg viewBox="0 0 ${W} ${Hh}" width="100%" role="img" aria-label="Price chart for ${s.s}">`;
+  g += yt.map(v => `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${ml - 6}" y="${y(v) + 4}" text-anchor="end">₹${v >= 1000 ? v.toFixed(0) : v.toFixed(v < 50 ? 1 : 0)}</text>`).join("");
+  const xt = niceTicks(0, cc.length - 1, 8).filter(k => Number.isInteger(k));
+  g += xt.map(k => `<text x="${x(k)}" y="${Hh - 6}" text-anchor="middle">${k === 0 ? "list" : "d" + k}</text>`).join("");
+  if (r.d.kind === "u_turn") {
+    const i = r.d.i, j = i + r.tr.n;
+    g += `<rect x="${x(i)}" y="${mt}" width="${Math.max(1, x(j) - x(i))}" height="${Hh - mb - mt}" fill="var(--band)" opacity=".7"/>`;
+    g += `<line x1="${ml}" x2="${W - mr}" y1="${y(L * (1 - p.stop))}" y2="${y(L * (1 - p.stop))}" stroke="var(--down)" stroke-dasharray="2 4" opacity=".8"/><text x="${W - mr}" y="${y(L * (1 - p.stop)) + 14}" text-anchor="end" style="fill:var(--down)">stop ₹${(L * (1 - p.stop)).toFixed(1)}</text>`;
+  }
+  if (s.ip) g += `<line x1="${ml}" x2="${W - mr}" y1="${y(s.ip)}" y2="${y(s.ip)}" stroke="var(--nifty)" stroke-dasharray="6 4"/><text x="${ml + 6}" y="${y(s.ip) - 5}">issue ₹${s.ip}</text>`;
+  g += `<line x1="${ml}" x2="${W - mr}" y1="${y(L)}" y2="${y(L)}" stroke="var(--accent)" stroke-width="1.5"/><text x="${W - mr}" y="${y(L) - 6}" text-anchor="end" style="fill:var(--accent)">listing close ₹${L}</text>`;
+  g += `<path d="${path}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+  if (r.d.ti >= 0 && r.d.ti < cc.length) g += `<circle cx="${x(r.d.ti)}" cy="${y(c[r.d.ti])}" r="4.5" fill="var(--down)"/><text x="${x(r.d.ti)}" y="${y(c[r.d.ti]) + 18}" text-anchor="middle" style="fill:var(--down)">low ${fmtP(c[r.d.ti] / L - 1, 0)}</text>`;
+  if (r.d.kind === "u_turn") g += `<circle cx="${x(r.d.i)}" cy="${y(c[r.d.i])}" r="5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/><text x="${x(r.d.i)}" y="${y(c[r.d.i]) - 12}" text-anchor="middle" style="fill:var(--ink)">reclaim d${r.d.i}</text>`;
+  g += `</svg>`;
+  $("detail").innerHTML = `<div class="scroll">${g}</div>`;
+  $("detailTitle").innerHTML = `${s.s} <span class="muted" style="font:400 14px var(--body)">${s.n}</span>`;
+  $("detailNote").innerHTML = r.d.kind === "u_turn"
+    ? `Listed ${dstr(s.t[0])} · reclaim ${dstr(s.t[r.d.i])} · trade <span class="num ${cls(r.tr.r)}">${fmtP(r.tr.r)}</span> over ${r.tr.n} sessions (${r.tr.exit === "stop" ? "stopped" : r.tr.exit === "time" ? "time exit" : "still open"})`
+    : `Listed ${dstr(s.t[0])} · still below listing close · last ₹${c.at(-1)} needs ${fmtP(L / c.at(-1) - 1)} to reclaim`;
+}
+
+// ---------- wiring ----------
+const DEF = { dip: 10, base: 10, maxd: 250, stop: 8, hold: 60, yr: years[0] };
+try { const sv = JSON.parse(localStorage.getItem("iporally") || "null"); if (sv) for (const k in DEF) if (sv[k] != null) $(k).value = sv[k] } catch (e) {}
+if (!$("yr").value) $("yr").value = DEF.yr;
+let raf;
+for (const k in DEF) $(k).addEventListener("input", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { render(); try { localStorage.setItem("iporally", JSON.stringify(Object.fromEntries(Object.keys(DEF).map(k => [k, $(k).value])))) } catch (e) {} }) });
+$("reset").onclick = () => { for (const k in DEF) $(k).value = DEF[k]; try { localStorage.removeItem("iporally") } catch (e) {} render() };
+render();
+</script>

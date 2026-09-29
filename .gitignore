@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+.claude/
+.DS_Store
+# Re-downloadable with fetch_data.py
+data/prices/
